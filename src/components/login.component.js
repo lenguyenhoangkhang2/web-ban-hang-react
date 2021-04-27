@@ -81,7 +81,7 @@ export default class Login extends Component {
           />
 
           <Form onSubmit={this.handleLogin} ref={(form) => (this.form = form)}>
-            <div className="form-group">
+            <div className="from-group">
               <label htmlFor="username">Username</label>
               <Input
                 type="text"

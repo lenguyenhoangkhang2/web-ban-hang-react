@@ -12,6 +12,7 @@ import Profile from "./components/profile.component";
 import BoardUser from "./components/board-user.component";
 import BoardClerk from "./components/board-clerk.component";
 import BoardAdmin from "./components/board-admin.component";
+import SaveProduct from "./components/addproduct.component";
 
 class App extends Component {
   constructor(props) {
@@ -71,6 +72,14 @@ class App extends Component {
               </li>
             )}
 
+            {showAdminBoard && (
+              <li className="nav-item">
+                <Link to={"products/add-product"} className="nav-link">
+                  Add Product
+                </Link>
+              </li>
+            )}
+
             {currentUser && (
               <li className="nav-item">
                 <Link to={"/user"} className="nav-link">
@@ -118,6 +127,7 @@ class App extends Component {
             <Route exact path={"/user"} component={BoardUser} />
             <Route exact path={"/clerk"} component={BoardClerk} />
             <Route exact path={"/admin"} component={BoardAdmin} />
+            <Route exact path={"/products/add-product"} component={SaveProduct} />
           </Switch>
         </div>
       </div>
