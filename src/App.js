@@ -1,138 +1,259 @@
-import React, { Component } from "react";
-import { Switch, Route, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import "react-s-alert/dist/s-alert-default.css";
+import "react-s-alert/dist/s-alert-css-effects/slide.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { Switch, Route, useHistory, Redirect } from "react-router-dom";
+import Alert from "react-s-alert";
+
 import "./App.css";
 
-import AuthService from "./services/auth.service";
+import AuthApi, * as AuthService from "./api/auth";
 
-import Login from "./components/login.component";
-import Register from "./components/register.component";
-import Home from "./components/home.component";
-import Profile from "./components/profile.component";
-import BoardUser from "./components/board-user.component";
-import BoardClerk from "./components/board-clerk.component";
-import BoardAdmin from "./components/board-admin.component";
-import SaveProduct from "./components/addproduct.component";
+import { ACCESS_TOKEN } from "./constants";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
+import Profile from "./components/Profile";
+import OAuth2RedirectHandler from "./components/OAuth2RedirectHandler";
+import PrivateRoute from "./components/PrivateRoute";
+import Error from "./components/Error";
+import SaveProduct from "./components/SaveProduct";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showClerkBoard: false,
-      showAdminBoard: false,
-      currentUser: undefined,
-    };
-  }
+import Header from "./parts/Header";
+import Home from "./parts/Home";
+import ProductPage from "./components/ProductPage";
+import CartPage from "./components/CartPage";
+import CategoryPage from "./components/CategoryPage";
+import CheckoutPage from "./components/Checkout";
+import Stripe from "./components/Stripe";
+import PaymentCancel from "./components/Checkout/cancel";
+import PaymentSuccess from "./components/Checkout/success";
+import AdminRoute from "./components/Admin/AdminRoute";
+import AdminOrderList from "./components/Admin/AdminOrderList";
 
-  componentDidMount() {
-    const user = AuthService.getCurrentUser();
+const App = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [hasUpdateCurrentUser, setHasUpdateCurrentUser] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-    if (user) {
-      this.setState({
-        currentUser: user,
-        showClerkBoard: user.roles.includes("ROLE_CLERK"),
-        showAdminBoard: user.roles.includes("ROLE_ADMIN"),
-      });
+  const history = useHistory();
+
+  useEffect(() => {
+    const token = localStorage.getItem(ACCESS_TOKEN);
+
+    if (!token) {
+      return;
     }
-  }
 
-  logOut() {
-    AuthService.logout();
-  }
+    const getUser = async () => {
+      try {
+        const response = await AuthApi.getCurrentUser();
+        const user = response.data;
 
-  render() {
-    const { currentUser, showAdminBoard, showClerkBoard } = this.state;
+        setCurrentUser(user);
+        setAuthenticated(true);
+        setIsAdmin(user.authorities.includes("ROLE_ADMIN"));
+        setAuthLoading(false);
+      } catch (err) {
+        setAuthLoading(false);
+        Alert.error("Oops! Something went wrong. Please try again!");
+      }
+    };
+    setHasUpdateCurrentUser(false);
+    getUser();
+  }, [authenticated, hasUpdateCurrentUser]);
 
-    return (
-      <div>
-        <nav className="navbar navbar-expand navbar-dark bg-dark">
-          <Link to={"/"} className="navbar-brand">
-            UIT 2018
-          </Link>
-          <div className="navbar-nav mr-auto">
-            <li className="nav-item">
-              <Link to={"/home"} className="nav-link">
-                Home
-              </Link>
-            </li>
+  const signupHandle = async (e, data) => {
+    e.preventDefault();
+    setAuthLoading(true);
 
-            {showClerkBoard && (
-              <li className="nav-item">
-                <Link to={"/clerk"} className="nav-link">
-                  Clerk Board
-                </Link>
-              </li>
+    try {
+      const response = await AuthApi.signup(data.name, data.email, data.password);
+      setAuthLoading(false);
+      history.replace("/login");
+      Alert.success(
+        response.data.message || "User registration successful. Please login!"
+      );
+    } catch (err) {
+      setAuthLoading(false);
+      Alert.error(
+        (err && err.message) || "Oops! Something went wrong. Please try again!"
+      );
+    }
+  };
+
+  const loginHandler = async (e, authData) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    try {
+      const response = await AuthApi.login(authData.email, authData.password);
+      const accessToken = response.data.accessToken;
+      localStorage.setItem(ACCESS_TOKEN, accessToken);
+
+      setAuthenticated(true);
+      setAuthLoading(false);
+
+      history.push("/home");
+
+      Alert.success("Login successfully");
+    } catch (err) {
+      setAuthLoading(false);
+      Alert.error(
+        err.response.data.message || "Oops! Something went wrong. Please try again!"
+      );
+    }
+  };
+
+  const logOut = async () => {
+    localStorage.removeItem(ACCESS_TOKEN);
+    setAuthenticated(false);
+    setCurrentUser(null);
+    setIsAdmin(false);
+
+    Alert.success("You're logged out!");
+  };
+
+  return (
+    <div>
+      <Header currentUser={currentUser} isAdmin={isAdmin} logOut={logOut} />
+
+      <div className="container mt3">
+        <Switch>
+          <Route
+            exact
+            path={["/", "/home"]}
+            render={(props) => <Home isAdmin={isAdmin} {...props} />}
+          />
+          <Route
+            path={"/login"}
+            render={(props) => (
+              <Login
+                onLogin={loginHandler}
+                isAuthentication={authenticated}
+                loading={authLoading}
+                {...props}
+              />
             )}
-
-            {showAdminBoard && (
-              <li className="nav-item">
-                <Link to={"/admin"} className="nav-link">
-                  Admin Board
-                </Link>
-              </li>
+          />
+          <Route
+            path="/signup"
+            render={(props) => (
+              <Signup
+                onSignup={signupHandle}
+                isAuthentication={authenticated}
+                loading={authLoading}
+                {...props}
+              />
             )}
+          ></Route>
 
-            {showAdminBoard && (
-              <li className="nav-item">
-                <Link to={"products/add-product"} className="nav-link">
-                  Add Product
-                </Link>
-              </li>
+          {!authLoading && (
+            <PrivateRoute
+              path="/profile"
+              authenticated={authenticated}
+              currentUser={currentUser}
+              updateCurrentUser={() => setHasUpdateCurrentUser(true)}
+              component={Profile}
+            ></PrivateRoute>
+          )}
+          {!authLoading && (
+            <PrivateRoute
+              path="/cart"
+              authenticated={authenticated}
+              currentUser={currentUser}
+              component={CartPage}
+            ></PrivateRoute>
+          )}
+          {/* <Route
+            exact
+            path="/smart-phone"
+            render={}
+          ></Route>
+          <Route
+            exact
+            path="/laptop"
+            component={OAuth2RedirectHandler}
+          ></Route> */}
+
+          <Route
+            path="/oauth2/redirect"
+            oauth2Login={() => setAuthenticated(true)}
+            component={OAuth2RedirectHandler}
+          ></Route>
+          {isAdmin && <Route exact path={"/admin/add-product"} component={SaveProduct} />}
+          {isAdmin && (
+            <Route
+              exact
+              path="/admin/edit-product/:productId"
+              render={(props) => <SaveProduct editMode={true} {...props} />}
+            ></Route>
+          )}
+          <Route
+            exact
+            path="/products/:productId"
+            render={(props) => (
+              <ProductPage
+                isAuth={authenticated}
+                isAdmin={isAdmin}
+                enableBtnAddToCard={true}
+                {...props}
+              />
             )}
-
-            {currentUser && (
-              <li className="nav-item">
-                <Link to={"/user"} className="nav-link">
-                  User
-                </Link>
-              </li>
+          ></Route>
+          <Route
+            path="/smartphone"
+            render={(props) => (
+              <CategoryPage type="SmartPhone" isAuth={authenticated} isAdmin={isAdmin} />
             )}
-
-            {currentUser ? (
-              <div className="navbar-nav ml-auto">
-                <li className="nav-item">
-                  <Link to={"/profile"} className="nav-link">
-                    {currentUser.name}
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <a href="/login" className="nav-link" onClick={this.logOut}>
-                    LogOut
-                  </a>
-                </li>
-              </div>
-            ) : (
-              <div className="navbar-nav ml-auto">
-                <li className="nav-item">
-                  <Link to={"/login"} className="nav-link">
-                    Login
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link to={"/register"} className="nav-link">
-                    SignUp
-                  </Link>
-                </li>
-              </div>
+          ></Route>
+          <Route
+            path="/laptop"
+            render={(props) => (
+              <CategoryPage type="Laptop" isAuth={authenticated} isAdmin={isAdmin} />
             )}
-          </div>
-        </nav>
+          ></Route>
+          <Route
+            exact
+            path="/checkout"
+            render={(props) => (
+              <CheckoutPage
+                isAuth={authenticated}
+                currentUser={currentUser}
+                updateCurrentUser={() => setHasUpdateCurrentUser(true)}
+                {...props}
+              />
+            )}
+          ></Route>
+          <Route
+            exact
+            path="/checkout/stripe"
+            render={(props) => <Stripe isAuth={authenticated} {...props} />}
+          ></Route>
+          <Route exact path="/checkout/success" component={PaymentSuccess}></Route>
+          <Route exact path="/checkout/cancel" component={PaymentCancel}></Route>
 
-        <div className="container mt3">
-          <Switch>
-            <Route exact path={["/", "/home"]} component={Home} />
-            <Route exact path={"/login"} component={Login} />
-            <Route exact path={"/register"} component={Register} />
-            <Route exact path={"/profile"} component={Profile} />
-            <Route exact path={"/user"} component={BoardUser} />
-            <Route exact path={"/clerk"} component={BoardClerk} />
-            <Route exact path={"/admin"} component={BoardAdmin} />
-            <Route exact path={"/products/add-product"} component={SaveProduct} />
-          </Switch>
-        </div>
+          {!authLoading && (
+            <AdminRoute
+              exact
+              path="/admin/orders"
+              isAdmin={isAdmin}
+              component={AdminOrderList}
+            ></AdminRoute>
+          )}
+          <Route component={Error}></Route>
+        </Switch>
       </div>
-    );
-  }
-}
+
+      <Alert
+        stack={{ limit: 3 }}
+        timeout={3000}
+        position="top-right"
+        effect="slide"
+        offset={65}
+      />
+    </div>
+  );
+};
 
 export default App;
