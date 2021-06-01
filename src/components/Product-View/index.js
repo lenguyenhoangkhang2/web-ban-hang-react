@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, Badge, Button, ButtonGroup } from "react-bootstrap";
 import PropTypes from "prop-types";
 import NumberFormat from "react-number-format";
@@ -8,8 +8,12 @@ import { BsStar, BsStarFill } from "react-icons/bs";
 import SAlert from "react-s-alert";
 import Rating from "react-rating";
 import CartApi from "../../api/cart";
+import YesNoQuestion from "../Dialog/YesNoQuestion";
+import ProductApi from "../../api/product";
 
 const ProductView = ({ isAuth, isAdmin, enableBtnAddToCard, product }) => {
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
   const getImageOfficial = () => {
     const official = product.images.find(({ type }) => type === "Official");
     return official.url;
@@ -20,6 +24,18 @@ const ProductView = ({ isAuth, isAdmin, enableBtnAddToCard, product }) => {
       const response = await CartApi.addProduct(product.id);
       if (response.status === 200) {
         SAlert.success(response.data);
+      }
+    } catch (error) {
+      SAlert.error(error.response.data.message);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    setOpenDeleteDialog(false);
+    try {
+      const response = await ProductApi.deleteProduct(product.id);
+      if (response.status === 200) {
+        SAlert.success("Đã xóa sản phẩm " + product.name);
       }
     } catch (error) {
       SAlert.error(error.response.data.message);
@@ -77,11 +93,21 @@ const ProductView = ({ isAuth, isAdmin, enableBtnAddToCard, product }) => {
               className="mb-2"
               variant="success"
             >
-              Edit
+              Chỉnh sửa
             </Button>
-            <Button as={Link} to="#" className="mb-2" variant="danger">
-              Delete
+            <Button
+              variant="danger"
+              onClick={() => setOpenDeleteDialog(true)}
+              className="mb-2"
+              size="sm"
+            >
+              Xóa
             </Button>
+            <YesNoQuestion
+              isOpen={openDeleteDialog}
+              onClickYes={handleDeleteProduct}
+              onClickNo={() => setOpenDeleteDialog(false)}
+            />
           </ButtonGroup>
         )}
 

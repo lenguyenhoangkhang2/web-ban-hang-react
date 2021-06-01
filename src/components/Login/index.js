@@ -4,6 +4,7 @@ import { Card, Button, Form, Row, Col, Image, Spinner } from "react-bootstrap";
 import { FaGoogle, FaFacebook } from "react-icons/fa";
 
 import { GOOGLE_AUTH_URL, FACEBOOK_AUTH_URL } from "../../constants";
+import SAlert from "react-s-alert";
 
 const Login = (props) => {
   const [email, setEmail] = useState("");
@@ -11,6 +12,10 @@ const Login = (props) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const location = useLocation();
+
+  if (props.location.state.error) {
+    SAlert.error(props.location.state.error);
+  }
 
   if (props.isAuthentication) {
     return (
@@ -34,7 +39,7 @@ const Login = (props) => {
           </Card.Title>
           <Form
             onSubmit={(e) => {
-              props.onLogin(e, { email: email, password: password });
+              props.onLocalLogin(e, { email: email, password: password });
             }}
           >
             <Form.Group>

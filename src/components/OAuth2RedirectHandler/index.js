@@ -1,10 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { ACCESS_TOKEN } from "../../constants";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
-import Alert from "react-s-alert";
-import { login } from "../../api/auth";
 
-const OAuth2RedirectHandler = ({ oauth2Login }) => {
+const OAuth2RedirectHandler = () => {
   const history = useHistory();
   const location = useLocation();
 
@@ -25,13 +23,13 @@ const OAuth2RedirectHandler = ({ oauth2Login }) => {
     history.push("/home");
     window.location.reload();
   } else {
-    console.log(error);
     return (
       <Redirect
         to={{
           pathname: "/login",
           state: {
             from: location.pathname,
+            error: error,
           },
         }}
       />

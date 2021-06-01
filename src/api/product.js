@@ -55,6 +55,11 @@ const ProductApi = {
     const url = `products/${productId}/reviewed`;
     return axiosClient.get(url);
   },
+
+  deleteProduct: (productId) => {
+    const url = `products/${productId}`;
+    return axiosClient.delete(url);
+  },
 };
 
 export default ProductApi;

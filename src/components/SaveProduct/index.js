@@ -423,7 +423,6 @@ const SaveProduct = ({ editMode }) => {
                   <Select
                     onChange={(e) => {
                       setProduct({ ...product, brandName: e.value });
-                      oldBrand.current.remove();
                     }}
                     placeholder="brand options"
                     options={listBrand}

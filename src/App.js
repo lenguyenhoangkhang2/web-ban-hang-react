@@ -43,6 +43,7 @@ const App = () => {
     const token = localStorage.getItem(ACCESS_TOKEN);
 
     if (!token) {
+      setAuthLoading(false);
       return;
     }
 
@@ -60,9 +61,11 @@ const App = () => {
         Alert.error("Oops! Something went wrong. Please try again!");
       }
     };
-    setHasUpdateCurrentUser(false);
     getUser();
+    setHasUpdateCurrentUser(false);
   }, [authenticated, hasUpdateCurrentUser]);
+
+  console.log(authLoading);
 
   const signupHandle = async (e, data) => {
     e.preventDefault();
@@ -129,7 +132,7 @@ const App = () => {
             path={"/login"}
             render={(props) => (
               <Login
-                onLogin={loginHandler}
+                onLocalLogin={loginHandler}
                 isAuthentication={authenticated}
                 loading={authLoading}
                 {...props}
