@@ -13,8 +13,10 @@ const Login = (props) => {
 
   const location = useLocation();
 
-  if (props.location.state.error) {
-    SAlert.error(props.location.state.error);
+  if (props.location.state) {
+    if (props.location.state.error) {
+      SAlert.error(props.location.state.error);
+    }
   }
 
   if (props.isAuthentication) {
