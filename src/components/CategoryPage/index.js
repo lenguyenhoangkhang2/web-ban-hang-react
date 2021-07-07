@@ -1,19 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { Row, Col, Form } from "react-bootstrap";
-import { Redirect, useLocation } from "react-router-dom";
-import queryString from "query-string";
 import { FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import Select from "react-select";
 import ReactPaginate from "react-paginate";
 import ProductList from "../Product-List";
+import ProductApi from "../../api/product";
 
-const CategoryPage = ({ isAuth, type, isAdmin }) => {
+const CategoryPage = ({ size, isAuth, type, isAdmin }) => {
+  const [listBrand, setListBrand] = useState([]);
+  const [brand, setBrand] = useState(null);
   const [price, setPrice] = useState({ min: 0, max: null });
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSorBy] = useState("createdDate");
   const [sortDirection, setSortDirection] = useState("desc");
   const [page, setPage] = useState(0);
-  const [size, setSize] = useState(1);
   const [totalPage, setTotalPage] = useState(0);
+
+  useEffect(() => {
+    const loadBrandOptions = async () => {
+      const response = await ProductApi.getBrand();
+      const optionsBrandCustom = response.data.map((item) => ({
+        label: item,
+        value: item,
+      }));
+      optionsBrandCustom.unshift({ label: "Tất cả", value: "" });
+      setListBrand(optionsBrandCustom);
+    };
+
+    loadBrandOptions();
+  }, []);
 
   const onChangePrice = (e) => {
     if (e.target.value === "all") {
@@ -22,6 +37,7 @@ const CategoryPage = ({ isAuth, type, isAdmin }) => {
     }
     const { min, max } = JSON.parse(e.target.value);
     setPrice({ min: min, max: max });
+    setPage(0);
   };
 
   const onChangeSorted = (e) => {
@@ -41,20 +57,31 @@ const CategoryPage = ({ isAuth, type, isAdmin }) => {
       default:
         break;
     }
+    setPage(0);
   };
 
   const onChangeSearchTerm = (e) => {
     setSearchTerm(e.target.value);
+    setPage(0);
+  };
+
+  const onChangeBrand = (e) => {
+    setBrand(e.value);
+    setPage(0);
   };
 
   return (
     <>
       <Form.Row className="justify-content-between">
-        <Form.Group as={Col} md="8" controlId="formSearch">
+        <Form.Group as={Col} md="6" controlId="formSearch">
           <Form.Label>
             <strong>TÌM KIẾM</strong>
           </Form.Label>
           <Form.Control type="text" onChange={onChangeSearchTerm} />
+        </Form.Group>
+        <Form.Group as={Col} md="2">
+          <Form.Label>Thương hiệu</Form.Label>
+          <Select onChange={onChangeBrand} placeholder="Tất cả" options={listBrand} />
         </Form.Group>
         <Form.Group as={Col} md="2" controlId="formPrice">
           <Form.Label>Giá sản phẩm</Form.Label>
@@ -81,8 +108,9 @@ const CategoryPage = ({ isAuth, type, isAdmin }) => {
       </Form.Row>
       <ProductList
         page={page}
-        size={1}
+        size={size}
         sortBy={sortBy}
+        brand={brand}
         minPrice={price.min}
         maxPrice={price.max}
         sortDirection={sortDirection}
@@ -94,10 +122,11 @@ const CategoryPage = ({ isAuth, type, isAdmin }) => {
         enablePagination={true}
         handleWithTotalPage={(totalPage) => setTotalPage(totalPage)}
       />
-      <Row className="justify-content-center product-list-pagination">
+      <Row className="justify-content-center mt-2 product-list-pagination">
         <Col md="5">
           <ReactPaginate
             pageCount={totalPage}
+            forcePage={page}
             pageRangeDisplayed={size}
             marginPagesDisplayed={5}
             nextLabel={<FaAngleRight />}
@@ -113,7 +142,7 @@ const CategoryPage = ({ isAuth, type, isAdmin }) => {
             nextLinkClassName={"page-link"}
             activeClassName={"active"}
             disabledClassName={"disabled"}
-            onPageChange={(e) => setPage(e.selected)}
+            onPageChange={({ selected }) => setPage(selected)}
           />
         </Col>
       </Row>

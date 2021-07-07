@@ -1,15 +1,20 @@
 import React, { useState } from "react";
-import { Link, Redirect, useHistory, useLocation } from "react-router-dom";
-import { Card, Button, Form, Row, Col, Image, Spinner } from "react-bootstrap";
+import { Link, Redirect, useLocation } from "react-router-dom";
+import { Card, Button, Form, Row, Col, Spinner, InputGroup } from "react-bootstrap";
 import { FaGoogle, FaFacebook } from "react-icons/fa";
 
 import { GOOGLE_AUTH_URL, FACEBOOK_AUTH_URL } from "../../constants";
 import SAlert from "react-s-alert";
+import AuthApi from "../../api/auth";
+import ButtonSendEmailVerify from "../ButtonSendEmailVerify";
 
 const Login = (props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [error, setError] = useState({ field: "", message: "" });
+  const [sendingEmailConfirm, setSendingEmailConfirm] = useState(false);
+  const [emailSended, setEmailSended] = useState(false);
 
   const location = useLocation();
 
@@ -32,42 +37,127 @@ const Login = (props) => {
     );
   }
 
+  const onChangePassword = (e) => {
+    setError({ field: "", message: "" });
+    setPassword(e.target.value);
+  };
+
+  const onChangeEmail = (e) => {
+    setError({ field: "", message: "" });
+    setEmail(e.target.value);
+  };
+
+  const sendEmailConfirm = async () => {
+    setSendingEmailConfirm(true);
+    try {
+      const response = await AuthApi.sendEmailVerification(email);
+      if (response.status === 200) {
+        setSendingEmailConfirm(false);
+        setEmailSended(true);
+      }
+    } catch (err) {
+      const errorMessage =
+        (err.response && err.response.data && err.response.data.message) ||
+        err.message ||
+        err.toString();
+      SAlert.error(errorMessage);
+      setSendingEmailConfirm(false);
+    }
+  };
+
+  const handleOnSubmit = async (e) => {
+    const { type, message } = await props.onLocalLogin(e, {
+      email: email,
+      password: password,
+    });
+    if (type === "success") {
+      SAlert.success(message);
+    } else {
+      switch (message) {
+        case "Not found email":
+          setError({
+            message: "Email chưa đăng ký",
+            field: "email",
+          });
+          break;
+        case "Bad credentials":
+          setError({
+            message: "Sai mật khẩu",
+            field: "password",
+          });
+          break;
+        case "User is disabled":
+          setError({
+            message: "Email chưa được xác nhận",
+            field: "email",
+          });
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
   return (
-    <Row>
-      <Card as={Col} md="6" className="text-center">
+    <Row className="justify-content-center">
+      <Card as={Col} md="6">
         <Card.Body>
           <Card.Title className="mb-4">
-            <h3>Login to JAVA</h3>
+            <h3 className="text-center">Login to JAVA</h3>
           </Card.Title>
-          <Form
-            onSubmit={(e) => {
-              props.onLocalLogin(e, { email: email, password: password });
-            }}
-          >
+          <Form onSubmit={(e) => handleOnSubmit(e)}>
             <Form.Group>
-              <Form.Label className="text-left">Email</Form.Label>
+              <Form.Label htmlFor="email" className="text-left">
+                Email
+              </Form.Label>
               <Form.Control
-                onChange={(e) => setEmail(e.target.value)}
+                id="email"
+                value={email}
+                onChange={(e) => onChangeEmail(e)}
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Nhập email tài khoản"
+                isInvalid={error.field === "email"}
               ></Form.Control>
+              <Form.Control.Feedback type="invalid">
+                {error.message}{" "}
+              </Form.Control.Feedback>
+              {error.message === "Email chưa được xác nhận" && (
+                <ButtonSendEmailVerify
+                  isSended={emailSended}
+                  isSending={sendingEmailConfirm}
+                  onClick={sendEmailConfirm}
+                />
+              )}
             </Form.Group>
             <Form.Group>
-              <Form.Label className="text-left">Password</Form.Label>
-              <Form.Control
-                onChange={(e) => setPassword(e.target.value)}
-                type={passwordVisible ? "text" : "password"}
-                placeholder="Enter your password"
-              ></Form.Control>
-              <Form.Text
-                className="text-left pe-auto"
-                style={{ cursor: "pointer" }}
-                onClick={() => setPasswordVisible(!passwordVisible)}
-              >
-                {passwordVisible ? "Show password" : "Hide password"}
-              </Form.Text>
+              <Form.Label htmlFor="password" className="text-left">
+                Mật khẩu
+              </Form.Label>
+              <InputGroup>
+                <Form.Control
+                  id="password"
+                  onChange={(e) => onChangePassword(e)}
+                  value={password}
+                  type={passwordVisible ? "text" : "password"}
+                  placeholder="Nhập mật khẩu tài khoản"
+                  isInvalid={error.field === "password"}
+                ></Form.Control>
+                <InputGroup.Text
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setPasswordVisible(!passwordVisible)}
+                >
+                  {passwordVisible ? "Ẩn" : "Hiện"}
+                </InputGroup.Text>
+                <Form.Control.Feedback type="invalid">
+                  {error.message}
+                </Form.Control.Feedback>
+              </InputGroup>
+
+              <Link to="/reset-password">
+                <small>Quên mật khẩu</small>
+              </Link>
             </Form.Group>
-            <Form.Group>
+            <Form.Group className="text-center mb-1">
               <Button className="w-50" variant="dark" type="submit">
                 {!props.loading ? (
                   "Login"
@@ -76,8 +166,13 @@ const Login = (props) => {
                 )}
               </Button>
             </Form.Group>
-            <Card.Subtitle>
-              <h5>Or</h5>
+            <div className="text-center">
+              <Link className="text-decoration-none" to="/signup">
+                Tạo tài khoản mới
+              </Link>
+            </div>
+            <Card.Subtitle className="mb-2 mt-2">
+              <h5 className="text-center">Or</h5>
             </Card.Subtitle>
             <Form.Group>
               <Button className="w-100" href={GOOGLE_AUTH_URL} variant="danger">
@@ -90,9 +185,6 @@ const Login = (props) => {
               </Button>
             </Form.Group>
           </Form>
-          <Card.Text>
-            No account? <Link to="/signup"> Create account</Link>
-          </Card.Text>
         </Card.Body>
       </Card>
     </Row>

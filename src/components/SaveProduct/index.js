@@ -65,7 +65,6 @@ const SaveProduct = ({ editMode }) => {
   const [listCategory, setListCategory] = useState([]);
   const [listBrand, setListBrand] = useState([]);
   const [imageOfficial, setImageOfficial] = useState(imageInitState);
-  const [imageBanner, setImageBanner] = useState(imageInitState);
   const [listImageSlider, setListImageSlider] = useState([]);
   const [message, setMessage] = useState({ success: undefined, error: undefined });
   const [loading, setLoading] = useState(false);
@@ -129,15 +128,7 @@ const SaveProduct = ({ editMode }) => {
   };
 
   const onChangeImageOfficial = (e) => {
-    console.log(e.target.files[0]);
     setImageOfficial({
-      file: e.target.files[0],
-      preview: URL.createObjectURL(e.target.files[0]),
-    });
-  };
-
-  const onChangeImageBanner = (e) => {
-    setImageBanner({
       file: e.target.files[0],
       preview: URL.createObjectURL(e.target.files[0]),
     });
@@ -156,9 +147,6 @@ const SaveProduct = ({ editMode }) => {
     const formData = new FormData();
     if (imageOfficial.file !== null) {
       formData.append("official", imageOfficial.file);
-    }
-    if (imageBanner.file !== null) {
-      formData.append("banner", imageBanner.file);
     }
 
     listImageSlider.forEach((image) => {
@@ -372,12 +360,14 @@ const SaveProduct = ({ editMode }) => {
         <Col lg="8" className="align-items-center">
           <Card>
             <Card.Header>
-              <h3 className="text-center">Add new product</h3>
+              <h3 className="text-center">
+                {editMode ? "Cập nhật thông tin sản phẩm" : "Thêm sản phẩm mới"}
+              </h3>
             </Card.Header>
             <Card.Body>
               <Form.Row>
                 <Form.Group as={Col} md="6">
-                  <Form.Label>Name</Form.Label>
+                  <Form.Label>Tên sản phẩm</Form.Label>
                   <Form.Control
                     type="text"
                     value={product.name}
@@ -389,7 +379,7 @@ const SaveProduct = ({ editMode }) => {
                   </Form.Control.Feedback>
                 </Form.Group>
                 <Form.Group as={Col}>
-                  <Form.Label>Price</Form.Label>
+                  <Form.Label>Giá</Form.Label>
                   <Form.Control
                     type="number"
                     value={product.price}
@@ -400,7 +390,7 @@ const SaveProduct = ({ editMode }) => {
               </Form.Row>
               <Form.Row>
                 <Form.Group as={Col}>
-                  <Form.Label>Category</Form.Label>
+                  <Form.Label>Loại sản phẩm</Form.Label>
                   {editMode ? (
                     <Form.Text>
                       <h4>{product.categoryName}</h4>
@@ -414,7 +404,7 @@ const SaveProduct = ({ editMode }) => {
                   )}
                 </Form.Group>
                 <Form.Group as={Col}>
-                  <Form.Label>Brands</Form.Label>
+                  <Form.Label>Thương hiệu</Form.Label>
                   {editMode && (
                     <Form.Text ref={oldBrand}>
                       <h4>{product.brandName}</h4>
@@ -432,7 +422,7 @@ const SaveProduct = ({ editMode }) => {
 
               <Form.Row>
                 <Form.Group as={Col}>
-                  <Form.Label>Discount</Form.Label>
+                  <Form.Label>Giảm giá</Form.Label>
                   <Form.Control
                     type="number"
                     value={product.discount}
@@ -443,7 +433,7 @@ const SaveProduct = ({ editMode }) => {
                   />
                 </Form.Group>
                 <Form.Group as={Col}>
-                  <Form.Label>Quantity</Form.Label>
+                  <Form.Label>Số lượng</Form.Label>
                   <Form.Control
                     type="number"
                     value={product.quantity}
@@ -459,16 +449,6 @@ const SaveProduct = ({ editMode }) => {
                 {imageOfficial.preview && (
                   <Card as={Col} md="8">
                     <Card.Img src={imageOfficial.preview} width="50%" />
-                  </Card>
-                )}
-              </Form.Group>
-
-              <Form.Group>
-                <Form.Label>Banner sản phẩm (Nếu có)</Form.Label>
-                <Form.Control type="file" onChange={onChangeImageBanner} />
-                {imageBanner.preview && (
-                  <Card as={Col} md="8">
-                    <Card.Img src={imageBanner.preview} width="50%" />
                   </Card>
                 )}
               </Form.Group>
@@ -537,7 +517,7 @@ const SaveProduct = ({ editMode }) => {
           {loading ? (
             <Spinner animation="border"></Spinner>
           ) : (
-            <h4>{editMode ? "Sửa sản phẩm" : "Thêm sản phẩm"}</h4>
+            <h4>{editMode ? "Sửa thông tin sản phẩm" : "Thêm sản phẩm"}</h4>
           )}
         </Button>
       </Form.Group>

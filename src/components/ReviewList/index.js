@@ -43,7 +43,7 @@ const ReviewList = ({ isAuth, productId, closeButton }) => {
     setHasNewReview(false);
   }, [productId, hasNewReview, isAuth]);
 
-  const handleOnSubmit = async (e) => {
+  const addReview = async (e) => {
     e.preventDefault();
     try {
       const response = await ProductApi.createProductReview(productId, comment, rating);
@@ -89,26 +89,31 @@ const ReviewList = ({ isAuth, productId, closeButton }) => {
         (isReviewed ? (
           <h4 className="text-center">Bạn đã đánh giá sản phẩm</h4>
         ) : (
-          <Form onSubmit={handleOnSubmit}>
-            <Form.Group>
-              <Form.Label>
+          <>
+            <Form.Group className="mb-1">
+              <Form.Label htmlFor="comment">
                 <b>Đánh giá của bạn</b>
-                <Rating
-                  step={1}
-                  fractions={2}
-                  onChange={(value) => setRating(value)}
-                  emptySymbol={<BsStar size="30px" />}
-                  fullSymbol={<BsStarFill size="30px" />}
-                />
               </Form.Label>
               <Form.Control
                 type="text"
+                id="comment"
                 onChange={(e) => setComment(e.target.value)}
               ></Form.Control>
             </Form.Group>
-
-            <Button type="submit">Thêm nhận xét</Button>
-          </Form>
+            <Rating
+              className="mb-2"
+              step={1}
+              fractions={2}
+              initialRating={rating}
+              onChange={(value) => setRating(value)}
+              emptySymbol={<BsStar size="20px" />}
+              fullSymbol={<BsStarFill size="20px" />}
+            />
+            <br />
+            <Button type="submit" onClick={addReview}>
+              Thêm nhận xét
+            </Button>
+          </>
         ))}
     </>
   );

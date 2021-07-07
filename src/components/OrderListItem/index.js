@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Card, ListGroup, Button, Row, Col } from "react-bootstrap";
+import { Table, Card, ListGroup, Button, Row, Col, Spinner } from "react-bootstrap";
 import OrderApi from "../../api/order";
 import SAlert from "react-s-alert";
 
@@ -20,48 +20,66 @@ const OrderListItem = ({ order, isAdmin }) => {
     createdDate: order.createdDate,
     listProductItems: order.items,
     total: order.total,
+    userInfo: {
+      country: order.userInfo.country,
+      detail: order.userInfo.detail,
+      district: order.userInfo.district,
+      name: order.userInfo.name,
+      phone: order.userInfo.phone,
+      email: order.userInfo.email,
+      province: order.userInfo.province,
+    },
   });
 
-  console.log(orderItem);
+  const [updating, setUpdating] = useState(false);
 
   const handleCancelOrder = async () => {
+    setUpdating(true);
     try {
       const response = await OrderApi.cancelOrder(orderItem.id);
       if (response.status === 200) {
         setOrderItem({ ...orderItem, status: "Canceled" });
         SAlert.success(response.data.message);
+        setUpdating(false);
       }
     } catch (error) {
       if (error.response.status === 400) {
         SAlert.error(error.response.data.message);
       }
+      setUpdating(false);
     }
   };
 
   const handleUpdateOrder = async () => {
+    setUpdating(true);
     try {
       const response = await OrderApi.updateOrder(orderItem.id);
       if (response.status === 200) {
         setOrderItem({ ...orderItem, status: response.data.orderStatus });
         SAlert.success("Cập nhật đơn hàng thành công!");
+        setUpdating(false);
       }
     } catch (error) {
       if (error.response.status === 400) {
         SAlert.error(error.response.data.message);
       }
+      setUpdating(false);
     }
   };
 
   const handleReturnOrder = async () => {
+    setUpdating(true);
     try {
       const response = await OrderApi.returnOrder(orderItem.id);
       if (response.status === 200) {
         setOrderItem({ ...orderItem, status: "Returned" });
+        setUpdating(false);
       }
     } catch (error) {
       if (error.response.status === 400) {
         SAlert.error(error.response.data.message);
       }
+      setUpdating(false);
     }
   };
 
@@ -69,15 +87,32 @@ const OrderListItem = ({ order, isAdmin }) => {
     <Card className="mb-3">
       <Card.Header>
         <strong>Mã đơn hàng:</strong> {orderItem.id}
+        <br />
+        <strong>Tình trạng:</strong> {orderStatus[orderItem.status].status}
+        <br />
+        <strong>Ngày đặt hàng: </strong>
+        {orderItem.createdDate}
+        <br />
+        <strong>Cập nhật lần cuối: </strong> {orderItem.updatedDate}
       </Card.Header>
       <ListGroup variant="flush">
         <ListGroup.Item>
-          <strong>Tình trạng:</strong> {orderStatus[orderItem.status].status}
+          {isAdmin && (
+            <>
+              <strong>Tên khách hàng: </strong>
+              {orderItem.userInfo.name}
+              <br />
+              <strong>Email: </strong>
+              {orderItem.userInfo.email}
+              <br />
+            </>
+          )}
+          <strong>SĐT: </strong>
+          {orderItem.userInfo.phone}
           <br />
-          <strong>Ngày đặt hàng: </strong>
-          {orderItem.createdDate}
+          <strong>Địa chỉ: </strong>
+          {`${orderItem.userInfo.detail}, ${orderItem.userInfo.district}, ${orderItem.userInfo.province}, ${orderItem.userInfo.country}`}
           <br />
-          <strong>Cập nhật lần cuối: </strong> {orderItem.updatedDate}
         </ListGroup.Item>
         <ListGroup.Item>
           <div className="mb-2">
@@ -88,6 +123,7 @@ const OrderListItem = ({ order, isAdmin }) => {
               <tr>
                 <th>Tên sản phẩm</th>
                 <th>Giá sản phẩm</th>
+                <th>Giảm giá</th>
                 <th>Số lượng</th>
                 <th>Tổng</th>
               </tr>
@@ -96,14 +132,28 @@ const OrderListItem = ({ order, isAdmin }) => {
               {orderItem.listProductItems.map((item) => (
                 <tr key={item.productName}>
                   <td>{item.productName}</td>
-                  <td>{item.price}</td>
+                  <td>
+                    {item.price.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,") +
+                      "đ"}
+                  </td>
+                  <td>{item.discount > 0 ? `-${item.discount}%` : "Không có"}</td>
                   <td>{item.quantity}</td>
-                  <td>{item.total}</td>
+                  <td>
+                    {item.total.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,") +
+                      "đ"}
+                  </td>
                 </tr>
               ))}
               <tr>
-                <td colSpan={4} className="text-right pr-4 pt-2 pb-2">
-                  <strong>Tổng tiền: {orderItem.total}</strong>
+                <td colSpan={5} className="text-right pr-4 pt-2 pb-2">
+                  <strong>
+                    Tổng tiền:{" "}
+                    <span>
+                      {orderItem.total
+                        .toString()
+                        .replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,") + "đ"}
+                    </span>
+                  </strong>
                 </td>
               </tr>
             </tbody>
@@ -111,7 +161,7 @@ const OrderListItem = ({ order, isAdmin }) => {
           <Row>
             {isAdmin && (
               <Col>
-                {!["Collected", "Canceled"].includes(orderItem.status) && (
+                {!updating && !["Collected", "Canceled"].includes(orderItem.status) && (
                   <Button
                     size="sm"
                     onClick={handleUpdateOrder}
@@ -121,10 +171,16 @@ const OrderListItem = ({ order, isAdmin }) => {
                     {orderStatus[orderItem.status].nextAction}
                   </Button>
                 )}
-                {orderItem.status === "Shipping" && (
+                {!updating && orderItem.status === "Shipping" && (
                   <Button size="sm" onClick={handleReturnOrder} variant="warning">
                     Đơn hàng trả về
                   </Button>
+                )}
+                {updating && (
+                  <>
+                    <Spinner animation="border" variant="primary"></Spinner>
+                    <span>Đang cập nhật</span>
+                  </>
                 )}
               </Col>
             )}

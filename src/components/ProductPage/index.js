@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Col, Row, Carousel, Card, Toast, Alert } from "react-bootstrap";
+import { Col, Row, Carousel, Card, Alert } from "react-bootstrap";
 import PropTypes from "prop-types";
 import { useParams } from "react-router";
 
@@ -9,28 +9,41 @@ import ProductView from "../Product-View";
 import LaptopDetails from "./SmartPhoneDetails";
 import SmartPhoneDetails from "./LapTopDetails";
 import ReviewList from "../ReviewList";
+import LoadingIndicator from "../LoadingIndicator";
 
 const ProductPage = ({ isAuth, isAdmin, enableBtnAddToCard }) => {
   const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const { productId } = useParams();
 
   useEffect(() => {
+    setLoading(true);
     const getProduct = async () => {
       try {
         const response = await ProductApi.getById(productId);
         const productData = response.data;
         setProduct(productData);
+        setLoading(false);
       } catch (error) {
+        setLoading(false);
         if (error) {
           console.log(error);
         }
       }
     };
-    getProduct();
+    const timeOut = setTimeout(() => {
+      getProduct();
+    }, 400);
+
+    return () => {
+      clearTimeout(timeOut);
+    };
   }, [productId]);
 
-  return (
+  return loading ? (
+    <LoadingIndicator />
+  ) : (
     <>
       <Row className="product-page">
         {product && (
@@ -86,7 +99,7 @@ const ProductPage = ({ isAuth, isAdmin, enableBtnAddToCard }) => {
           <Alert variant="info">
             <h4>Đánh giá sản phẩm</h4>
           </Alert>
-          <ReviewList isAuth={isAuth} closeButton={isAdmin} productId={productId} />
+          <ReviewList isAuth={isAuth} closeButton={false} productId={productId} />
         </Col>
       </Row>
     </>

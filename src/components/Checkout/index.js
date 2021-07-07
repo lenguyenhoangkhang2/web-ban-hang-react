@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Row, Col, Button, Alert } from "react-bootstrap";
 import NumberFormat from "react-number-format";
-import { Redirect } from "react-router-dom";
+import { Redirect, useHistory } from "react-router-dom";
 import CartApi from "../../api/cart";
 import { loadStripe } from "@stripe/stripe-js";
 import SAlert from "react-s-alert";
@@ -14,6 +14,8 @@ const CheckoutPage = ({ currentUser, updateCurrentUser }) => {
   const [listItem, setListItem] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const history = useHistory();
 
   useEffect(() => {
     setLoading(true);
@@ -63,6 +65,7 @@ const CheckoutPage = ({ currentUser, updateCurrentUser }) => {
       const response = await PaymentApi.addCodPayment();
       if (response.status === 200) {
         SAlert.success(response.data.message);
+        history.replace("/profile");
       }
     } catch (error) {
       if (error.response.status === 400) {

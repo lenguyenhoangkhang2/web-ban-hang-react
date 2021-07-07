@@ -54,7 +54,11 @@ const ProductView = ({ isAuth, isAdmin, enableBtnAddToCard, product }) => {
         <Card.Text></Card.Text>
         <h5>
           <NumberFormat
-            value={product.price - (product.price * product.discount) / 100}
+            value={
+              Math.round(
+                (product.price - (product.price * product.discount) / 100) / 10000
+              ) * 10000
+            }
             thousandSeparator={true}
             suffix="đ"
             displayType="text"
@@ -104,6 +108,8 @@ const ProductView = ({ isAuth, isAdmin, enableBtnAddToCard, product }) => {
               Xóa
             </Button>
             <YesNoQuestion
+              dialogTitle="Xác nhận xóa sản phẩm"
+              dialogDescription="Thông tin sản phẩm sẽ bị xóa đi vĩnh viễn"
               isOpen={openDeleteDialog}
               onClickYes={handleDeleteProduct}
               onClickNo={() => setOpenDeleteDialog(false)}
@@ -113,7 +119,7 @@ const ProductView = ({ isAuth, isAdmin, enableBtnAddToCard, product }) => {
 
         {enableBtnAddToCard && isAuth && (
           <Button onClick={addToCart} variant="primary">
-            Add to Cart
+            Thêm vào giỏ hàng
           </Button>
         )}
       </Card.Body>

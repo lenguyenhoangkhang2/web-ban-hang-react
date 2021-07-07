@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Col, Row, Spinner } from "react-bootstrap";
+import { Col, Row } from "react-bootstrap";
 import ProductView from "../Product-View";
 import ProductApi from "../../api/product";
 import SAlert from "react-s-alert";
 import PropTypes from "prop-types";
 import "./style.css";
+import LoadingIndicator from "../LoadingIndicator";
 
 const ProductList = (props) => {
   const [productList, setProductList] = useState([]);
@@ -44,10 +45,14 @@ const ProductList = (props) => {
 
     const timer = setTimeout(() => {
       getProductData();
-    }, 600);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [props]);
+
+  if (loading) {
+    return <LoadingIndicator />;
+  }
 
   return productList.length > 0 ? (
     <>
@@ -71,9 +76,8 @@ const ProductList = (props) => {
     <Row className="justify-content-center">
       <Col md="12" className="text-center mb-4">
         <div className="mb-2">
-          <strong>{loading ? "loading" : "Không tìm thấy sản phẩm"}</strong>
+          <strong>"Không tìm thấy sản phẩm"</strong>
         </div>
-        {loading && <Spinner animation="border" variant="primary" />}
       </Col>
     </Row>
   );

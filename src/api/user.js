@@ -11,6 +11,18 @@ const UserApi = {
       detail: userInfo.detail,
     });
   },
+
+  findAll: (params) => {
+    const url = "/user";
+    return axiosClient.get(url, {
+      params: params,
+    });
+  },
+
+  addRoleAdmin: (userId) => {
+    const url = "/user/addAdminRole";
+    return axiosClient.post(url, userId);
+  },
 };
 
 export default UserApi;

@@ -7,7 +7,13 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import PropTypes from "prop-types";
 
-export default function YesNoQuestion({ isOpen, onClickYes, onClickNo }) {
+export default function YesNoQuestion({
+  dialogTitle,
+  dialogDescription,
+  isOpen,
+  onClickYes,
+  onClickNo,
+}) {
   const handleOnYes = () => {
     onClickYes();
   };
@@ -17,16 +23,11 @@ export default function YesNoQuestion({ isOpen, onClickYes, onClickNo }) {
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={handleOnNo}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <DialogTitle id="alert-dialog-title">{"Xác nhận xóa sản phẩm"}</DialogTitle>
+    <Dialog open={isOpen} onClose={handleOnNo}>
+      <DialogTitle id="alert-dialog-title">{dialogTitle}</DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          Bạn thực sự muốn xóa sản phẩm
+          {dialogDescription}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
@@ -42,11 +43,12 @@ export default function YesNoQuestion({ isOpen, onClickYes, onClickNo }) {
 }
 
 YesNoQuestion.defaultProps = {
-  open: false,
+  isOpen: false,
+  title: "",
 };
 
 YesNoQuestion.propTypes = {
-  open: PropTypes.bool.isRequired,
+  isOpen: PropTypes.bool.isRequired,
   onClickYes: PropTypes.func,
   onClickNo: PropTypes.func,
 };

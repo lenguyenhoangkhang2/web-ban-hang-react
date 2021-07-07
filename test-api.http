@@ -1,4 +1,4 @@
-@token = eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzNiIsImlhdCI6MTYyMTA2MjQzNywiZXhwIjoxNjIxOTI2NDM3fQ.zG2i6-DHGfyEvbC-bStxFyDLEgviGntKttA6vUFkHyp58iS9jgvq6hJmaLU-nQHa9GoprqE40Y3ht1tm9obejw
+@token = eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyIiwiaWF0IjoxNjI0OTc5MDQ2LCJleHAiOjE2MjU4NDMwNDZ9.Yzx6UCatz9onDsjgXG3obmwc1hHekdyQa8zT5abH-pOYEzY3yPtPuUsm0uY5Iqx8rjYMKahuf_xv0s_iWzmXnA
 @baseUrl = https://localhost:8443
 ###
 POST  {{baseUrl}}/auth/login
@@ -58,4 +58,14 @@ GET {{baseUrl}}/products/6 HTTP/1.1
 
 ###
 # @name getFileUpload
+
 GET {{baseUrl}}/files HTTP/1.1
+
+###
+
+GET {{baseUrl}}/orders/user HTTP/1.1
+Authorization: Bearer {{token}}
+
+###
+GET {{baseUrl}}/user HTTP/1.1
+Authorization: Bearer {{token}}

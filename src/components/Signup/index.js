@@ -1,78 +1,162 @@
 import React, { useState } from "react";
-import { Link, Redirect, useLocation } from "react-router-dom";
-import { Card, Form, Button, Col, Row } from "react-bootstrap";
-import Alert from "react-s-alert";
+import { Link, Redirect, useHistory, useLocation } from "react-router-dom";
+import { Card, Form, Button, Col, Row, Alert, Spinner } from "react-bootstrap";
+import AuthApi from "../../api/auth";
+import SAlert from "react-s-alert";
 
-import { signup } from "../../api/auth";
-import { GOOGLE_AUTH_URL, FACEBOOK_AUTH_URL } from "../../constants";
-
-const Signup = ({ onSignup, isAuthentication, loading }) => {
+const Signup = ({ onSignup, isAuthentication }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState({
+    name: "",
+    password: "",
+    confirmPassword: "",
+    email: "",
+  });
   const location = useLocation();
+  const history = useHistory();
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await AuthApi.signup(name, email, password, confirmPassword);
+      if (response.status === 200) {
+        history.replace("/login");
+        SAlert.success(response.data.message);
+      }
+      setLoading(false);
+    } catch (err) {
+      if (err.response.status === 400) {
+        setError({
+          name: err.response.data["name"],
+          email: err.response.data["email"],
+          password: err.response.data["password"],
+          confirmPassword: err.response.data["confirmPassword"],
+        });
+      }
+      setLoading(false);
+    }
+  };
+
+  const onChangeName = (e) => {
+    setError({ ...error, name: "" });
+    setName(e.target.value);
+  };
+
+  const onChangePassword = (e) => {
+    setError({ ...error, password: "" });
+    setPassword(e.target.value);
+  };
+
+  const onChangeConfirmPassword = (e) => {
+    setError({ ...error, confirmPassword: "" });
+    setConfirmPassword(e.target.value);
+  };
+
+  const onChangeEmail = (e) => {
+    setError({ ...error, email: "" });
+    setEmail(e.target.value);
+  };
 
   if (isAuthentication) {
     return <Redirect to={{ pathname: "/", state: { from: location } }} />;
   }
 
   return (
-    <Row>
-      <Card as={Col} md="6" className="text-center">
+    <Row className="justify-content-center">
+      <Card as={Col} lg="6" md="8">
         <Card.Body>
-          <Card.Title className="mb-4">
-            <h3>Create your account</h3>
-          </Card.Title>
-          <Button className="w-100 mb-3" href={GOOGLE_AUTH_URL} variant="danger">
-            Signup with google
-          </Button>
-          <Button className="w-100" href={FACEBOOK_AUTH_URL} variant="primary">
-            Signup with facebook
-          </Button>
-          <Card.Subtitle className="mt-3">
-            <h5>Or</h5>
-          </Card.Subtitle>
-          <Form
-            onSubmit={(e) =>
-              onSignup(e, {
-                email: email,
-                name: name,
-                password: password,
-              })
-            }
-          >
+          <Alert variant="info text-center">
+            <h4 className="mb-0 fw-bold">TẠO TÀI KHOẢN</h4>
+          </Alert>
+          <Form onSubmit={(e) => handleSignup(e)}>
             <Form.Group>
-              <Form.Label className="text-left">Your Name</Form.Label>
+              <Form.Label htmlFor="name" className="text-left">
+                Tên người dùng
+              </Form.Label>
               <Form.Control
-                onChange={(e) => setName(e.target.value)}
+                id="name"
+                value={name}
+                onChange={(e) => onChangeName(e)}
                 type="text"
-                placeholder="Enter your name"
+                placeholder="Nhập tên của bạn"
+                isInvalid={error.name}
               ></Form.Control>
+              {error.name && (
+                <Form.Control.Feedback type="invalid">{error.name}</Form.Control.Feedback>
+              )}
             </Form.Group>
             <Form.Group>
-              <Form.Label className="text-left">Email</Form.Label>
+              <Form.Label htmlFor="email" className="text-left">
+                Email
+              </Form.Label>
               <Form.Control
-                onChange={(e) => setEmail(e.target.value)}
+                id="email"
+                value={email}
+                onChange={(e) => onChangeEmail(e)}
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Nhập email của bản"
+                isInvalid={error.email}
               ></Form.Control>
+              {error.email && (
+                <Form.Control.Feedback type="invalid">
+                  {error.email}
+                </Form.Control.Feedback>
+              )}
             </Form.Group>
             <Form.Group>
-              <Form.Label className="text-left">Password</Form.Label>
+              <Form.Label htmlFor="password" className="text-left">
+                Mật khẩu
+              </Form.Label>
               <Form.Control
-                onChange={(e) => setPassword(e.target.value)}
+                id="password"
+                value={password}
+                onChange={(e) => onChangePassword(e)}
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Nhập mật khẩu"
+                isInvalid={error.password}
               ></Form.Control>
+              {error.password && (
+                <Form.Control.Feedback type="invalid">
+                  {error.password}
+                </Form.Control.Feedback>
+              )}
             </Form.Group>
             <Form.Group>
+              <Form.Label htmlFor="confirmPassword" className="text-left">
+                Xác nhận mật khẩu
+              </Form.Label>
+              <Form.Control
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => onChangeConfirmPassword(e)}
+                type="password"
+                placeholder="Xác nhận mật khẩu"
+                isInvalid={error.confirmPassword}
+              ></Form.Control>
+              {error.confirmPassword && (
+                <Form.Control.Feedback type="invalid">
+                  {error.confirmPassword}
+                </Form.Control.Feedback>
+              )}
+            </Form.Group>
+            <Form.Group className="text-center">
               <Button className="w-50 mb-3" variant="dark" type="submit">
-                Signup
+                {loading ? (
+                  <Spinner size="sm" animation="border" variant="light" />
+                ) : (
+                  "Đăng ký"
+                )}
               </Button>
             </Form.Group>
           </Form>
-          <Card.Text>
-            Already have an account? <Link to="/login"> Login</Link>
+          <Card.Text className="text-center">
+            Đã có tài khoản? <Link to="/login"> đăng nhập</Link>
           </Card.Text>
         </Card.Body>
       </Card>

@@ -1,7 +1,4 @@
-import axios from "axios";
-import { ACCESS_TOKEN, API_BASE_URL } from "../constants";
 import axiosClient from "./axiosClient";
-import request from "./axiosClient";
 
 const AuthApi = {
   getCurrentUser: () => {
@@ -15,40 +12,37 @@ const AuthApi = {
     });
   },
 
-  signup: (name, email, password) => {
+  signup: (name, email, password, confirmPassword) => {
     return axiosClient.post("/auth/signup", {
       name: name,
       email: email,
       password: password,
+      confirmPassword: confirmPassword,
     });
   },
+
+  sendEmailResetPassword: (email) => {
+    return axiosClient.post("/auth/reset-password", {
+      email: email,
+    });
+  },
+
+  postNewPassword: (token, password, passwordConfirm) => {
+    return axiosClient.post(`/auth/reset-password/${token}`, {
+      password: password,
+      passwordConfirm: passwordConfirm,
+    });
+  },
+
+  sendEmailVerification: (email) => {
+    const url = "/auth/confirm-user-email";
+    return axiosClient.post(url, email);
+  },
+
+  verifyEmail: (token) => {
+    const url = "/auth/confirm-user-email/" + token;
+    return axiosClient.get(url);
+  },
 };
-
-export function getCurrentUser() {
-  return axios.get(API_BASE_URL + "/user/me");
-}
-
-export function login(email, password) {
-  return request({
-    url: API_BASE_URL + "/auth/login",
-    method: "POST",
-    data: {
-      email: email,
-      password: password,
-    },
-  });
-}
-
-export function signup(name, email, password) {
-  return request({
-    url: API_BASE_URL + "/auth/signup",
-    method: "POST",
-    data: {
-      name: name,
-      email: email,
-      password: password,
-    },
-  });
-}
 
 export default AuthApi;

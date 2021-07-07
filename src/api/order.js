@@ -1,18 +1,21 @@
 import axiosClient from "./axiosClient";
 
 const OrderApi = {
-  getAllByUser: () => {
-    return axiosClient.get("/orders/user");
+  getAllByUser: (params) => {
+    return axiosClient.get("/orders/user", {
+      params: params,
+    });
   },
 
   cancelOrder: (orderId) => {
     return axiosClient.put(`/orders/${orderId}?cancel`);
   },
 
-  getAll: () => {
-    return axiosClient.get("/orders/admin");
+  getAll: (params) => {
+    return axiosClient.get("/orders/admin", {
+      params: params,
+    });
   },
-
   updateOrder: (orderId) => {
     const url = `/orders/${orderId}/update`;
     return axiosClient.put(url);
